@@ -32,6 +32,7 @@
 #define SBI_EXT_DBCN				0x4442434E
 #define SBI_EXT_SUSP				0x53555350
 #define SBI_EXT_CPPC				0x43505043
+#define SBI_EXT_TEST				0x54455354
 
 /* SBI function IDs for BASE extension*/
 #define SBI_EXT_BASE_GET_SPEC_VERSION		0x0
@@ -298,6 +299,10 @@ enum sbi_cppc_reg_id {
 #define SBI_EXT_VENDOR_END			0x09FFFFFF
 #define SBI_EXT_FIRMWARE_START			0x0A000000
 #define SBI_EXT_FIRMWARE_END			0x0AFFFFFF
+
+/* SBI function IDs for TEST extension */
+#define SBI_EXT_TEST_SECURE_ENTER 0x0
+#define SBI_EXT_TEST_SECURE_EXIT  0x1
 
 /* SBI return error codes */
 #define SBI_SUCCESS				0
