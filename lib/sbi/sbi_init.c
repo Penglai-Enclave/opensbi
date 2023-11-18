@@ -14,6 +14,7 @@
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_cppc.h>
 #include <sbi/sbi_domain.h>
+#include <sbi/sbi_context_mgmt.h>
 #include <sbi/sbi_ecall.h>
 #include <sbi/sbi_hart.h>
 #include <sbi/sbi_hartmask.h>
@@ -355,6 +356,13 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 	rc = sbi_domain_finalize(scratch, hartid);
 	if (rc) {
 		sbi_printf("%s: domain finalize failed (error %d)\n",
+			   __func__, rc);
+		sbi_hart_hang();
+	}
+
+	rc = sbi_context_mgmt_init(scratch);
+	if (rc) {
+		sbi_printf("%s: context management init failed (error %d)\n",
 			   __func__, rc);
 		sbi_hart_hang();
 	}
