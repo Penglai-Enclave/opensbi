@@ -48,6 +48,9 @@ config SBI_ECALL_VENDOR
 
 config SBI_ECALL_DBTR
 	bool "Debug Trigger Extension"
+
+config SBI_ECALL_TEST
+	bool "Test extensions"
 	default y
 
 endmenu
