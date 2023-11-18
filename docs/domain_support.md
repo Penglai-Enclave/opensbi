@@ -53,6 +53,9 @@ has following details:
   domain. This can be either S-mode or U-mode.
 * **system_reset_allowed** - Is domain allowed to reset the system?
 * **system_suspend_allowed** - Is domain allowed to suspend the system?
+* **context_mgmt_enabled** - Is domain expected to yield HARTs and scheduled
+  on demand by context manager?
+* **next_ctx** - Context for this domain if context_mgmt_enabled
 
 The memory regions represented by **regions** in **struct sbi_domain** have
 following additional constraints to align with RISC-V PMP requirements:
@@ -93,6 +96,8 @@ following manner:
   is the next mode for the ROOT domain
 * **system_reset_allowed** - The ROOT domain is allowed to reset the system
 * **system_suspend_allowed** - The ROOT domain is allowed to suspend the system
+* **context_mgmt_enabled** - The ROOT domain doesn't need context manager
+* **next_ctx** - Null
 
 Domain Effects
 --------------
@@ -202,6 +207,13 @@ The DT properties of a domain instance DT node are as follows:
   whether the domain instance is allowed to do system reset.
 * **system-suspend-allowed** (Optional) - A boolean flag representing
   whether the domain instance is allowed to do system suspend.
+* **context_mgmt_enabled** (Optional) - When this option is turned on, the
+  domain no longer monopolizes a set of cores (hart assignment will be
+  ignored), and its context is managed by the secure context manager and
+  scheduled on demand, thus working as a low-privilege system runtime service.
+  Currently, domains with context management enabled only have migratory
+  unified context, which will be initialized and started up by cold-boot hart,
+  and its scheduling requests on multiple harts need to be synchronized.
 
 ### Assigning HART To Domain Instance
 
@@ -245,6 +257,12 @@ be done:
                 order = <20>;
             };
 
+            stmm_mem: stmm_mem {
+                compatible = "opensbi,domain,memregion";
+                base = <0x0 0x80C00000>;
+                order = <20>;
+            };
+
             tuart: tuart {
                 compatible = "opensbi,domain,memregion";
                 base = <0x0 0x10011000>;
@@ -271,10 +289,21 @@ be done:
                 system-suspend-allowed;
             };
 
+            mmdomain: standalonemm-domain {
+                compatible = "opensbi,domain,instance";
+                regions = <&stmm_mem 0x3f>;
+                next-arg1 = <0x0 0x80C80000>;
+                next-addr = <0x0 0x80C00000>;
+                next-mode = <0x1>;
+                system-reset-allowed;
+                system-suspend-allowed;
+                context_mgmt_enabled;
+            };
+
             udomain: untrusted-domain {
                 compatible = "opensbi,domain,instance";
                 possible-harts = <&cpu1 &cpu2 &cpu3 &cpu4>;
-                regions = <&tmem 0x0>, <&tuart 0x0>, <&allmem 0x3f>;
+                regions = <&tmem 0x0>, <&tuart 0x0>, <&stmm_mem 0x0>, <&allmem 0x3f>;
             };
         };
     };

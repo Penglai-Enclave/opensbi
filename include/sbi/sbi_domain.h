@@ -12,6 +12,7 @@
 
 #include <sbi/sbi_types.h>
 #include <sbi/sbi_hartmask.h>
+#include <sbi/sbi_context_mgmt.h>
 
 struct sbi_scratch;
 
@@ -186,6 +187,10 @@ struct sbi_domain {
 	unsigned long next_addr;
 	/** Privilege mode of next booting stage for this domain */
 	unsigned long next_mode;
+	/** Is domain expected to be scheduled on demand by context manager? */
+	bool context_mgmt_enabled;
+	/** Context for this domain if context_mgmt_enabled */
+	struct sbi_context *next_ctx;
 	/** Is domain allowed to reset the system */
 	bool system_reset_allowed;
 	/** Is domain allowed to suspend the system */
@@ -236,6 +241,13 @@ bool sbi_domain_is_assigned_hart(const struct sbi_domain *dom, u32 hartid);
  */
 ulong sbi_domain_get_assigned_hartmask(const struct sbi_domain *dom,
 				       ulong hbase);
+
+/**
+ * Assign given HART to specified domain
+ * @param dom pointer to domain
+ * @param hartid the HART ID
+ */
+void sbi_domain_assign_hart(struct sbi_domain *dom, u32 hartid);
 
 /**
  * Initialize a domain memory region based on it's physical

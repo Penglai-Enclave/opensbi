@@ -439,6 +439,16 @@ static int __fdt_parse_domain(void *fdt, int domain_offset, void *opaque)
 	else
 		dom->system_suspend_allowed = false;
 
+	/* Read "context_mgmt_enabled" DT property */
+	if (fdt_get_property(fdt, domain_offset, "context_mgmt_enabled", NULL)) {
+		dom->context_mgmt_enabled = true;
+		dom->next_ctx = sbi_zalloc(sizeof(struct sbi_context));
+		if (!dom->next_ctx) {
+			err = SBI_ENOMEM;
+			goto fail_free_all;
+		}
+	}
+
 	/* Find /cpus DT node */
 	cpus_offset = fdt_path_offset(fdt, "/cpus");
 	if (cpus_offset < 0) {
