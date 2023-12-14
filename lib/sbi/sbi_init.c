@@ -14,7 +14,6 @@
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_cppc.h>
 #include <sbi/sbi_domain.h>
-#include <sbi/sbi_context_mgmt.h>
 #include <sbi/sbi_ecall.h>
 #include <sbi/sbi_hart.h>
 #include <sbi/sbi_hartmask.h>

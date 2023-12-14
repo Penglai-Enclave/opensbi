@@ -12,7 +12,7 @@
 
 #include <sbi/sbi_types.h>
 #include <sbi/sbi_hartmask.h>
-#include <sbi/sbi_context_mgmt.h>
+#include <sbi/sbi_domain_context.h>
 
 struct sbi_scratch;
 

@@ -12,7 +12,7 @@
 #include <sbi/sbi_heap.h>
 #include <sbi/sbi_scratch.h>
 #include <sbi/sbi_string.h>
-#include <sbi/sbi_context_mgmt.h>
+#include <sbi/sbi_domain_context.h>
 
 /** 
  * Switches the hart context from the current domain to the target domain.
