@@ -14,7 +14,6 @@
 #include <sbi/sbi_domain.h>
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_string.h>
-#include <sbi/sbi_context_mgmt.h>
 
 #define SECURE_DOMAIN   "trusted-domain"
 
@@ -30,13 +29,13 @@ static int sbi_ecall_test_secure_enter(void)
 		}
 	}
 	if (tdom)
-		sbi_context_domain_enter(tdom);
+		sbi_domain_context_enter(tdom);
 	return 0;
 }
 
 static int sbi_ecall_test_secure_exit(void)
 {
-	sbi_context_domain_exit();
+	sbi_domain_context_exit();
 	return 0;
 }
 
