@@ -740,6 +740,13 @@ int sbi_domain_finalize(struct sbi_scratch *scratch, u32 cold_hartid)
 		}
 	}
 
+	rc = sbi_domain_context_init(scratch);
+	if (rc) {
+		sbi_printf("%s: domain context init failed (error %d)\n",
+			   __func__, rc);
+		return rc;
+	}
+
 	/*
 	 * Set the finalized flag so that the root domain
 	 * regions can't be changed.

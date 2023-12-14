@@ -40,11 +40,17 @@ static void switch_to_next_domain_context(struct sbi_context *ctx,
 	sbi_hart_pmp_configure(scratch);
 
 	/* Save current CSR context and restore target domain's CSR context */
-	ctx->csr_stvec	  = csr_read_set(CSR_STVEC, dom_ctx->csr_stvec);
-	ctx->csr_sscratch = csr_read_set(CSR_SSCRATCH, dom_ctx->csr_sscratch);
-	ctx->csr_sie	  = csr_read_set(CSR_SIE, dom_ctx->csr_sie);
-	ctx->csr_sip	  = csr_read_set(CSR_SIP, dom_ctx->csr_sip);
-	ctx->csr_satp	  = csr_read_set(CSR_SATP, dom_ctx->csr_satp);
+	ctx->sstatus	= csr_swap(CSR_SSTATUS, dom_ctx->sstatus);
+	ctx->sie		= csr_swap(CSR_SIE, dom_ctx->sie);
+	ctx->stvec		= csr_swap(CSR_STVEC, dom_ctx->stvec);
+	ctx->sscratch	= csr_swap(CSR_SSCRATCH, dom_ctx->sscratch);
+	ctx->sepc		= csr_swap(CSR_SEPC, dom_ctx->sepc);
+	ctx->scause		= csr_swap(CSR_SCAUSE, dom_ctx->scause);
+	ctx->stval		= csr_swap(CSR_STVAL, dom_ctx->stval);
+	ctx->sip		= csr_swap(CSR_SIP, dom_ctx->sip);
+	ctx->satp		= csr_swap(CSR_SATP, dom_ctx->satp);
+	ctx->scounteren = csr_swap(CSR_SCOUNTEREN, dom_ctx->scounteren);
+	ctx->senvcfg	= csr_swap(CSR_SENVCFG, dom_ctx->senvcfg);
 
 	/* Save current trap state and restore target domain's trap state */
 	trap_regs = (struct sbi_trap_regs *)(csr_read(CSR_MSCRATCH) -
@@ -53,10 +59,10 @@ static void switch_to_next_domain_context(struct sbi_context *ctx,
 	sbi_memcpy(trap_regs, &dom_ctx->regs, sizeof(*trap_regs));
 }
 
-int sbi_context_domain_enter(struct sbi_domain *dom)
+int sbi_domain_context_enter(struct sbi_domain *dom)
 {
-	struct sbi_context *ctx	    = sbi_context_thishart_ptr();
-	struct sbi_context *dom_ctx = sbi_hartindex_to_dom_context(
+	struct sbi_context *ctx	    = sbi_domain_context_thishart_ptr();
+	struct sbi_context *dom_ctx = sbi_hartindex_to_domain_context(
 		sbi_hartid_to_hartindex(current_hartid()), dom);
 
 	/* Validate the domain context before entering */
@@ -114,9 +120,9 @@ static void __noreturn startup_next_domain_context(struct sbi_context *dom_ctx)
 			     dom->next_mode, false);
 }
 
-int sbi_context_domain_exit(void)
+int sbi_domain_context_exit(void)
 {
-	struct sbi_context *ctx	    = sbi_context_thishart_ptr();
+	struct sbi_context *ctx	    = sbi_domain_context_thishart_ptr();
 	struct sbi_context *dom_ctx = ctx->next_ctx;
 
 	if (!dom_ctx)
@@ -223,7 +229,7 @@ fail_free_all:
 	return rc;
 }
 
-int sbi_context_mgmt_init(struct sbi_scratch *scratch)
+int sbi_domain_context_init(struct sbi_scratch *scratch)
 {
 	int rc;
 	u32 i;

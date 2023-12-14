@@ -4,8 +4,8 @@
  * Copyright (c) IPADS@SJTU 2023. All rights reserved.
  */
 
-#ifndef __SBI_CONTEXT_H__
-#define __SBI_CONTEXT_H__
+#ifndef __SBI_DOMAIN_CONTEXT_H__
+#define __SBI_DOMAIN_CONTEXT_H__
 
 #include <sbi/sbi_types.h>
 #include <sbi/sbi_trap.h>
@@ -16,16 +16,28 @@ struct sbi_context {
 	/** Trap-related states such as GPRs, mepc, and mstatus */
 	struct sbi_trap_regs regs;
 
-	/** Supervisor trap vector base address register */
-	uint64_t csr_stvec;
-	/** Supervisor scratch register for temporary storage */
-	uint64_t csr_sscratch;
+	/** Supervisor status register */
+	unsigned long sstatus;
 	/** Supervisor interrupt enable register */
-	uint64_t csr_sie;
+	unsigned long sie;
+	/** Supervisor trap vector base address register */
+	unsigned long stvec;
+	/** Supervisor scratch register for temporary storage */
+	unsigned long sscratch;
+	/** Supervisor exception program counter register */
+	unsigned long sepc;
+	/** Supervisor cause register */
+	unsigned long scause;
+	/** Supervisor trap value register */
+	unsigned long stval;
 	/** Supervisor interrupt pending register */
-	uint64_t csr_sip;
+	unsigned long sip;
 	/** Supervisor address translation and protection register */
-	uint64_t csr_satp;
+	unsigned long satp;
+	/** Counter-enable register */
+	unsigned long scounteren;
+	/** Supervisor environment configuration register */
+	unsigned long senvcfg;
 
 	/** Reference to the owning domain */
 	struct sbi_domain *dom;
@@ -36,12 +48,12 @@ struct sbi_context {
 };
 
 /** Get the context pointer for a given hart index and domain */
-#define sbi_hartindex_to_dom_context(__hartindex, __d) \
+#define sbi_hartindex_to_domain_context(__hartindex, __d) \
 	(__d)->hartindex_to_context_table[__hartindex]
 
 /** Macro to obtain the current hart's context pointer */
-#define sbi_context_thishart_ptr()                         \
-	sbi_hartindex_to_dom_context(                      \
+#define sbi_domain_context_thishart_ptr()                  \
+	sbi_hartindex_to_domain_context(                   \
 		sbi_hartid_to_hartindex(current_hartid()), \
 		sbi_domain_thishart_ptr())
 
@@ -51,18 +63,18 @@ struct sbi_context {
  *
  * @return 0 on success and negative error code on failure
  */
-int sbi_context_domain_enter(struct sbi_domain *dom);
+int sbi_domain_context_enter(struct sbi_domain *dom);
 
 /**
  * Exit the current domain context, and then return to the caller
- * of sbi_context_domain_enter or attempt to start the next domain
+ * of sbi_domain_context_enter or attempt to start the next domain
  * context to be initialized
  *
  * @return 0 on success and negative error code on failure
  */
-int sbi_context_domain_exit(void);
+int sbi_domain_context_exit(void);
 
 /** Initialize contexts for all domains */
-int sbi_context_mgmt_init(struct sbi_scratch *scratch);
+int sbi_domain_context_init(struct sbi_scratch *scratch);
 
-#endif // __SBI_CONTEXT_H__
+#endif // __SBI_DOMAIN_CONTEXT_H__

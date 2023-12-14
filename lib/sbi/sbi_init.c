@@ -360,13 +360,6 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 		sbi_hart_hang();
 	}
 
-	rc = sbi_context_mgmt_init(scratch);
-	if (rc) {
-		sbi_printf("%s: context management init failed (error %d)\n",
-			   __func__, rc);
-		sbi_hart_hang();
-	}
-
 	/*
 	 * Note: Platform final initialization should be after finalizing
 	 * domains so that it sees correct domain assignment and PMP
