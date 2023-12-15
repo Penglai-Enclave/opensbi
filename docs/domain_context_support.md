@@ -1,12 +1,12 @@
 Enhance Context Management for Domain
 ===================================================
 
-The context management component in OpenSBI provides basic CPU
-context initialization and management routines based on existing
-domains in OpenSBI. The context management component was initially
-designed to facilitate the suspension and resumption of domains,
-enabling secure domains to efficiently share CPU resources, and
-allowing the UEFI Secure Variable service to run within it.
+The domain context management component in OpenSBI provides basic CPU
+context management routines for existing OpenSBI domain. The context
+management component was initially designed to facilitate the suspension
+and resumption of domains, enabling secure domains to efficiently
+share CPU resources, and allowing the UEFI Secure Variable service to
+run within it.
 
 Introduction
 ------------
@@ -16,30 +16,34 @@ restricted from accessing memory and IO resources, and an isolation
 domain can be created. The OpenSBI Domain mechanism includes a
 comprehensive definition and implementation of the isolation domain,
 covering hardware resources, boot protocols, system privileges, and
-more. As a fundamental feature of opensbi, each upper-layer software
+more. As a fundamental feature of OpenSBI, each upper-layer software
 operates within its respective domain.
 
-The objective is to design and implement a context manager based on
-domains. This context manager allows for efficient CPU switching
+The objective is to design and implement a domain hart context
+manager. This context manager allows for efficient CPU switching
 between different isolation domains, enabling the utilization of CPU
 resources in scenarios where StMM, TEEOS, and other system runtime
-services that require security isolation are enabled. It facilitates the
-implementation of the least privilege and mutual isolation design.
+services that require security isolation are enabled. For example,
+a system service domain might proactively suspend its execution after
+initialization, yielding CPU resources, and then be scheduled to
+execute on-demand when other domains request its services. It makes
+domains suitable for running system services that follow the principles
+of least privilege and mutual isolation.
 
 The context management is based on the entity **struct sbi_context**, which
 allows for suspension or resumption of execution for each hart within a
 domain. At runtime, the context manager offers two interfaces:
-`sbi_context_domain_enter` and `sbi_context_domain_exit`, both of which
-perform context switching on the current hart. The crucial difference is
+`sbi_domain_context_enter` and `sbi_domain_context_exit`, both of which
+perform domain context switching on the current hart. The crucial difference is
 that the latter does not specify a target domain when called and simply
 signifies that the caller wishes to exit and suspend the current context.
 The context into which the hart will enter is determined by the context
 manager, which may be the caller who entered the current context via
-`sbi_context_domain_enter`, or it may be the next domain context awaiting
+`sbi_domain_context_enter`, or it may be the next domain context awaiting
 startup.
 
-The reference architecture shown below illustrates the inclusion of
-secure domains as runtime services, with the context manager
+The reference architecture shown below illustrates the scenario of employing
+enhanced secure domains to support runtime services, with the context manager
 providing synchronous context switching when a service is called.
 
 ![image](https://github.com/Penglai-Enclave/opensbi/assets/55442231/a3fa8fff-8ec9-4ad6-b748-c2ee724a3060)
@@ -55,16 +59,28 @@ struct sbi_context {
 	/** Trap-related states such as GPRs, mepc, and mstatus */
 	struct sbi_trap_regs regs;
 
-	/** Supervisor trap vector base address register */
-	uint64_t csr_stvec;
-	/** Supervisor scratch register for temporary storage in trap handlers */
-	uint64_t csr_sscratch;
+	/** Supervisor Status Register */
+	unsigned long sstatus;
 	/** Supervisor interrupt enable register */
-	uint64_t csr_sie;
+	unsigned long sie;
+	/** Supervisor trap vector base address register */
+	unsigned long stvec;
+	/** Supervisor scratch register for temporary storage */
+	unsigned long sscratch;
+	/** Supervisor exception program counter register */
+	unsigned long sepc;
+	/** Supervisor cause register */
+	unsigned long scause;
+	/** Supervisor trap value register */
+	unsigned long stval;
 	/** Supervisor interrupt pending register */
-	uint64_t csr_sip;
-	/** Supervisor address translation and protection register for managing virtual memory */
-	uint64_t csr_satp;
+	unsigned long sip;
+	/** Supervisor address translation and protection register */
+	unsigned long satp;
+	/** Counter-enable Register */
+	unsigned long scounteren;
+	/** Supervisor environment configuration register */
+	unsigned long senvcfg;
 
 	/** Reference to the owning domain */
 	struct sbi_domain *dom;
@@ -107,7 +123,7 @@ Functionalities and Interfaces
 
 ### Context Allocation and Configuration
 
-`sbi_context_mgmt_init` is the initialization function called during the
+`sbi_domain_context_init` is the initialization function called during the
 OpenSBI boot process. It sets up the contexts for each domain present in the
 system by calling `setup_domain_context`, which is the helper function that
 allocates the contexts for possible harts of the specified domain. It
@@ -186,7 +202,7 @@ During system runtime, domains can hook a message to the context manager
 through the ecall interface. There are two types of messages: "enter" and
 "exit".
 
-The enter interface (`sbi_context_domain_enter`) transitions a hart into a
+The enter interface (`sbi_domain_context_enter`) transitions a hart into a
 specified target domain's context synchronously if it's available. The
 current hart's context is saved, and the target domain's context is loaded
 and executed. This is encapsulated within the helper function
@@ -205,7 +221,7 @@ follows:
 
 ![image](https://github.com/Penglai-Enclave/opensbi/assets/55442231/887d26f5-c08f-45bb-b89c-cc344a0fde0b)
 
-The exit interface (`sbi_context_domain_exit`) is used when a hart needs to
+The exit interface (`sbi_domain_context_exit`) is used when a hart needs to
 exit its current domain context. This function is typically called when a
 hart needs to yield control to other domains.
 
