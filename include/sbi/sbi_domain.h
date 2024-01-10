@@ -203,6 +203,9 @@ extern struct sbi_domain root;
 /** Get pointer to sbi_domain from HART index */
 struct sbi_domain *sbi_hartindex_to_domain(u32 hartindex);
 
+/** Update HART local pointer to point to specified domain */
+void sbi_update_hartindex_to_domain(u32 hartindex, struct sbi_domain *dom);
+
 /** Get pointer to sbi_domain for current HART */
 #define sbi_domain_thishart_ptr() \
 	sbi_hartindex_to_domain(sbi_hartid_to_hartindex(current_hartid()))
@@ -239,13 +242,6 @@ bool sbi_domain_is_assigned_hart(const struct sbi_domain *dom, u32 hartid);
  */
 ulong sbi_domain_get_assigned_hartmask(const struct sbi_domain *dom,
 				       ulong hbase);
-
-/**
- * Assign given HART to specified domain
- * @param dom pointer to domain
- * @param hartid the HART ID
- */
-void sbi_domain_assign_hart(struct sbi_domain *dom, u32 hartid);
 
 /**
  * Initialize a domain memory region based on it's physical

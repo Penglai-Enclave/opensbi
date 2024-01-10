@@ -26,13 +26,18 @@
 static void switch_to_next_domain_context(struct sbi_context *ctx,
 					  struct sbi_context *dom_ctx)
 {
+	u32 hartindex;
 	struct sbi_trap_regs *trap_regs;
 	struct sbi_domain *dom	    = dom_ctx->dom;
 	struct sbi_scratch *scratch = sbi_scratch_thishart_ptr();
 	unsigned int pmp_count	    = sbi_hart_pmp_count(scratch);
 
 	/* Assign current hart to target domain */
-	sbi_domain_assign_hart(dom, current_hartid());
+	hartindex = sbi_hartid_to_hartindex(current_hartid());
+	sbi_hartmask_clear_hartindex(
+		hartindex, &sbi_domain_thishart_ptr()->assigned_harts);
+	sbi_update_hartindex_to_domain(hartindex, dom);
+	sbi_hartmask_set_hartindex(hartindex, &dom->assigned_harts);
 
 	/* Reconfigure PMP settings for the new domain */
 	for (int i = 0; i < pmp_count; i++) {
